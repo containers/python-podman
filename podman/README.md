@@ -4,6 +4,12 @@
 
 See [libpod](https://github.com/containers/libpod)
 
+## Overview
+
+Python podman library.
+
+Provide a stable API to call into.
+
 ## Releases
 
 To build the podman egg and install as user:
