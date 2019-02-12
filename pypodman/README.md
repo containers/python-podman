@@ -2,7 +2,11 @@
 
 ## Status: Active Development
 
-See [libpod](https://github.com/containers/libpod/contrib/python/pypodman)
+See [libpod](https://github.com/containers/libpod)
+
+## Overview
+
+Pypodman is a Python client based on the Python podman library.
 
 ## Releases
 
