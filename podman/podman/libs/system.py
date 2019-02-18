@@ -36,5 +36,5 @@ class System():
     def ping(self):
         """Return True if server awake."""
         with self._client() as podman:
-            response = podman.Ping()
-        return response['ping']['message'] == 'OK'
+            response = podman.GetVersion()
+        return 'version' in response
