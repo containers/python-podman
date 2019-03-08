@@ -17,7 +17,7 @@ class System():
     def versions(self):
         """Access versions."""
         with self._client() as podman:
-            vers = podman.GetVersion()['version']
+            vers = podman.GetVersion()
 
         client = '0.0.0'
         try:

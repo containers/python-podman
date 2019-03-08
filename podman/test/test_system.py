@@ -42,7 +42,7 @@ class TestSystem(unittest.TestCase):
             self.assertListEqual(
                 sorted([
                     'built', 'client_version', 'git_commit', 'go_version',
-                    'os_arch', 'version'
+                    'os_arch', 'version', 'remote_api_version'
                 ]), sorted(list(pclient.system.versions._fields)))
             pclient.system.versions
         self.assertIsNot(podman.__version__, '0.0.0')
@@ -57,6 +57,11 @@ class TestSystem(unittest.TestCase):
                     'host', 'insecure_registries', 'podman', 'registries',
                     'store'
                 ]), sorted(list(actual._fields)))
+
+    def test_swap_total(self):
+        with podman.Client(self.host) as pclient:
+            actual = pclient.system.info()
+            self.assertNotEqual(actual.host['swap_total'], 0)
 
 
 if __name__ == '__main__':
