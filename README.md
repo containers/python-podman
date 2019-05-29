@@ -12,6 +12,14 @@ Provide a stable API to call into.
 
 ## Releases
 
+### Requirements
+
+* Python 3.5+
+* OpenSSH 6.7+
+* Python dependencies in requirements.txt
+
+### Building
+
 To build the podman egg and install as user:
 
 ```sh

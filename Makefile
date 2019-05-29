@@ -23,6 +23,7 @@ install:
 .PHONY: upload
 upload:
 	PODMAN_VERSION=$(PODMAN_VERSION) $(PYTHON) setup.py sdist bdist_wheel
+	twine upload --verbose dist/*
 	twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
 .PHONY: clobber
