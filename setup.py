@@ -22,6 +22,7 @@ setup(
     author_email='jhonce@redhat.com',
     license='Apache Software License',
     long_description=readme,
+    long_description_content_type="text/markdown",
     include_package_data=True,
     install_requires=requirements,
     packages=find_packages(exclude=['test']),
