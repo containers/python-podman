@@ -17,7 +17,8 @@ script:
 deploy:
   - provider: pypi
     user: containers-libpod
-    password: fake-password
+    password:
+      secure: "C88DmalsYjwtUrjWWyEeeKtLa9Q0VXlCCoCDguNOhZFmroW3DsOxZZmHBEEK3fN2QCfE5asR4zMNMpszqg324ubY6gmfy+PHVOnsLVZf4B2ZV96vhGrElk99YfgblYidwqB0L84AxK6n54iX5KFQj/8WWfkTqnPrGcA6pGX5C332uKpQoW40k/OCSbdD0C/FzaTLvgH+rUxAhamu2I2k/qJFUr6uQ5flgIJyQJcgVCvN0dP4Yyx9eSRpuWbApn0NkHOSmXJD3I2YWEf5LCSjTiyDGuQlja2rOgLynoSgBa1t8ZFXSb/nenSunAAy2y1KOcrn7qCfc56V7NwcQ+RIXT7LlSU/e2GgwHlXXsRCpZOrBcKJu3tTlVsrxpk5aXg1+boKwl2T4NEjJERskmENT2TJyZFJMr3/XAdHtnuKZcqydO/CPIqIbfRfDSN2+/8J++I1zQa5+lDXjiA/Qs7gzCW2DLZIzvzT3bD1zQPWDAP2pmixLDOY6e29jMW5pqnJazU+mrJSwOKN6e5pe5dAKx436XFByK7HZhptmkFbP5LL0HnDO6VjK4QyF1KYnBV/S4Y58FyO2jOgXA7feYaybzzbzjRbooKiqG+GC0J76GSu7dd/pqTRWVYTEn37B+No7v5HEzTP1dnQWPPynppwyBMrtT1tqsRGyEmJnm7Ml/8="
     on:
       tags: true
     distributions: sdist bdist_wheel
