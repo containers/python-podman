@@ -1,0 +1,23 @@
+dist: xenial
+language: python
+cache:
+- pip
+python:
+- '3.4'
+- '3.5'
+- '3.6'
+before_install:
+- pip install -U pip
+- pip install -U setuptools
+- pip install -U wheel
+install:
+- pip install tox-travis .[devel]
+script:
+- echo "test"
+deploy:
+  - provider: pypi
+    user: containers-libpod
+    password: fake-password
+    on:
+      tags: true
+    distributions: sdist bdist_wheel
