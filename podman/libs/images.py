@@ -148,7 +148,7 @@ class Images():
         """Copy image from registry to image store."""
         with self._client() as podman:
             results = podman.PullImage(source)
-        return results['id']
+        return results['reply']['id']
 
     def search(self, id_, limit=25):
         """Search registries for id."""
