@@ -22,3 +22,4 @@ deploy:
     on:
       tags: true
     distributions: sdist bdist_wheel
+    skip_existing: true
