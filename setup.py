@@ -16,7 +16,7 @@ with open(os.path.join(root, 'requirements.txt')) as r:
 
 setup(
     name='podman',
-    version=os.environ.get('PODMAN_VERSION', '0.0.0'),
+    version=os.environ.get('PODMAN_VERSION', '1.4.3'),
     description='A library for communicating with a Podman server',
     author='Jhon Honce',
     author_email='jhonce@redhat.com',

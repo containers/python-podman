@@ -1,6 +1,6 @@
 PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python)
 DESTDIR ?= /
-PODMAN_VERSION ?= '0.11.1.1'
+PODMAN_VERSION ?= $(podman version -f "{{ .Version }}")
 
 .PHONY: python-podman
 python-podman:
