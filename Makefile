@@ -1,6 +1,6 @@
 PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python)
 DESTDIR ?= /
-PODMAN_VERSION ?= '0.11.1.1'
+PODMAN_VERSION ?= '0.12'
 
 .PHONY: python-podman
 python-podman:
@@ -23,6 +23,7 @@ install:
 .PHONY: upload
 upload:
 	PODMAN_VERSION=$(PODMAN_VERSION) $(PYTHON) setup.py sdist bdist_wheel
+	twine check dist/*
 	twine upload --verbose dist/*
 	twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
