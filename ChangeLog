@@ -1,0 +1,27 @@
+CHANGES
+=======
+
+* Fix pypi deployment by using documentation at markdown format
+
+v0.0.2
+------
+
+* Fix up pushing to pypi
+
+v0.0.1
+------
+
+* Pull image function throws KeyError for id
+* Secure Travis
+* Introduce travis-ci and autodeployments on tags
+* Improve packaging by using PBR
+* Add base requirements to README.md
+* Remove pypodman to python-pypodman repo
+* Update module to align with varlink API changes
+* Use GetVersion instead of Ping, as recommended
+* Improve README
+* pypodman: add options to handle ssh host keys
+* Update README.md
+* add missing bits
+* Initial copy from containers/libpod
+* Initial commit
