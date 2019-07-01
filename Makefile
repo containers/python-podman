@@ -21,11 +21,11 @@ install:
 	$(PYTHON) setup.py install --root ${DESTDIR}
 
 .PHONY: upload
-upload:
+upload: clean
 	PODMAN_VERSION=$(PODMAN_VERSION) $(PYTHON) setup.py sdist bdist_wheel
 	twine check dist/*
 	twine upload --verbose dist/*
-	twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --verbose dist/*
 
 .PHONY: clobber
 clobber: uninstall clean
