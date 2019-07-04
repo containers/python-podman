@@ -10,10 +10,18 @@ before_install:
 - pip install -U pip
 - pip install -U setuptools
 - pip install -U wheel
+- pip install -U twine
 install:
 - pip install tox-travis .[devel]
 script:
-- echo "test"
+- pip install -U setuptools
+- pip install -U wheel
+- pip install -U twine
+- pip list
+- rm -rf dist
+- python setup.py sdist
+- python setup.py bdist_wheel
+- twine check dist/*
 deploy:
   - provider: pypi
     user: containers-libpod
