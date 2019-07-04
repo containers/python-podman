@@ -1,5 +1,10 @@
 # podman - pythonic library for working with varlink interface to Podman
 
+[![Build Status](https://travis-ci.org/containers/python-podman.svg?branch=master)](https://travis-ci.org/containers/python-podman)
+![PyPI](https://img.shields.io/pypi/v/podman.svg)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/podman.svg)
+![PyPI - Status](https://img.shields.io/pypi/status/podman.svg)
+
 ## Status: Active Development
 
 See [libpod](https://github.com/containers/python-podman)
