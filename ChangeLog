@@ -1,7 +1,15 @@
 CHANGES
 =======
 
+* Bump to 0.0.3
 * Fix pypi deployment by using documentation at markdown format
+* Introduce python 3.7 support
+* API version retrieval
+
+v0.12.0
+-------
+
+* More packaging
 
 v0.0.2
 ------
