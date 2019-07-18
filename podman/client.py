@@ -46,7 +46,8 @@ class BaseClient():
             raise ValueError('interface is required and cannot be None')
 
         unsupported = set(kwargs.keys()).difference(
-            ('uri', 'interface', 'remote_uri', 'identity_file', 'ignore_hosts', 'known_hosts'))
+            ('uri', 'interface', 'remote_uri', 'identity_file',
+             'ignore_hosts', 'known_hosts'))
         if unsupported:
             raise ValueError('Unknown keyword arguments: {}'.format(
                 ', '.join(unsupported)))

@@ -127,7 +127,8 @@ class Tunnel():
             cmd.extend(('-o', 'StrictHostKeyChecking=no',
                         '-o', 'UserKnownHostsFile=/dev/null'))
         elif self.context.known_hosts:
-            cmd.extend(('-o', 'UserKnownHostsFile=%s' % self.context.known_hosts))
+            cmd.extend(('-o', 'UserKnownHostsFile={known_hosts}'.format(
+                known_hosts=self.context.known_hosts)))
 
         if self.context.identity_file:
             cmd.extend(('-i', self.context.identity_file))

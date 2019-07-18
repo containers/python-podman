@@ -3,8 +3,7 @@ from __future__ import absolute_import
 import unittest
 from unittest.mock import patch
 
-import podman
-from podman.client import BaseClient, Client, LocalClient, RemoteClient
+from podman.client import BaseClient, Client, LocalClient
 
 
 class TestClient(unittest.TestCase):
