@@ -191,12 +191,12 @@ class TestContainers(PodmanTestCase):
 
     def test_restart(self):
         self.assertTrue(self.alpine_ctnr.running)
-        before = self.alpine_ctnr.runningfor
+        _ = self.alpine_ctnr.runningfor
 
         ctnr = self.alpine_ctnr.restart()
         self.assertTrue(ctnr.running)
 
-        after = self.alpine_ctnr.runningfor
+        _ = self.alpine_ctnr.runningfor
 
         # TODO: restore check when restart zeros counter
         # self.assertLess(after, before)

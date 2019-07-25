@@ -1,6 +1,4 @@
 """A client for communicating with a Podman server."""
-import pkg_resources
-
 from .client import Client
 from .libs import FoldedString, datetime_format, datetime_parse
 from .libs.errors import (ContainerNotFound, ErrorOccurred, ImageNotFound,
