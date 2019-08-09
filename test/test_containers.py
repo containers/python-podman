@@ -2,10 +2,10 @@ import os
 import signal
 import unittest
 from pathlib import Path
-from test.podman_testcase import PodmanTestCase
-from test.retry_decorator import retry
 
 import podman
+from test.podman_testcase import PodmanTestCase
+from test.retry_decorator import retry
 
 
 class TestContainers(PodmanTestCase):
@@ -64,12 +64,13 @@ class TestContainers(PodmanTestCase):
         with self.assertRaises(podman.ContainerNotFound):
             self.pclient.containers.get("bozo")
 
+    @unittest.skip('Update to match new attach API')
     def test_attach(self):
         # StringIO does not support fileno() so we had to go old school
-        input = os.path.join(self.tmpdir, 'test_attach.stdin')
+        _input = os.path.join(self.tmpdir, 'test_attach.stdin')
         output = os.path.join(self.tmpdir, 'test_attach.stdout')
 
-        with open(input, 'w+') as mock_in, open(output, 'w+') as mock_out:
+        with open(_input, 'w+') as mock_in, open(output, 'w+') as mock_out:
             # double quote is indeed in the expected place
             mock_in.write('echo H"ello, World"; exit\n')
             mock_in.seek(0, 0)
@@ -158,8 +159,9 @@ class TestContainers(PodmanTestCase):
 
         details = img.inspect()
         self.assertEqual(details.author, 'Bozo the clown')
-        self.assertListEqual(['/usr/bin/zsh'], details.config['cmd'])
-        self.assertListEqual(['/bin/sh date'],
+        self.assertListEqual(['/bin/sh', '-c', '/usr/bin/zsh'],
+                             details.config['cmd'])
+        self.assertListEqual(['/bin/sh', '-c', '/bin/sh date'],
                              details.config['entrypoint'])
         self.assertIn('TEST=test_containers.TestContainers.test_commit',
                       details.config['env'])
@@ -178,7 +180,7 @@ class TestContainers(PodmanTestCase):
     def test_remove(self):
         before = len(self.containers)
 
-        with self.assertRaises(podman.ErrorOccurred):
+        with self.assertRaises(podman.InvalidState):
             self.alpine_ctnr.remove()
 
         self.assertEqual(
@@ -200,14 +202,6 @@ class TestContainers(PodmanTestCase):
 
         # TODO: restore check when restart zeros counter
         # self.assertLess(after, before)
-
-    def test_rename(self):
-        with self.assertRaisesNotImplemented():
-            self.alpine_ctnr.rename('new_alpine')
-
-    def test_resize_tty(self):
-        with self.assertRaisesNotImplemented():
-            self.alpine_ctnr.resize_tty(132, 43)
 
     def test_pause_unpause(self):
         self.assertTrue(self.alpine_ctnr.running)

@@ -1,11 +1,12 @@
 """A client for communicating with a Podman server."""
+
+from pbr.version import VersionInfo
+
 from .client import Client
 from .libs import FoldedString, datetime_format, datetime_parse
 from .libs.errors import (ContainerNotFound, ErrorOccurred, ImageNotFound,
-                          NoContainerRunning, NoContainersInPod,
+                          InvalidState, NoContainerRunning, NoContainersInPod,
                           PodContainerError, PodmanError, PodNotFound)
-
-from pbr.version import VersionInfo
 
 assert FoldedString
 
@@ -21,6 +22,7 @@ __all__ = [
     'datetime_parse',
     'ErrorOccurred',
     'ImageNotFound',
+    'InvalidState',
     'NoContainerRunning',
     'NoContainersInPod',
     'PodContainerError',

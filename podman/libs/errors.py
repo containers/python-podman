@@ -57,10 +57,15 @@ class PodmanError(VarlinkErrorProxy):
     """Raised when Client fails to connect to runtime."""
 
 
+class InvalidState(VarlinkErrorProxy):
+    """Raised when container is in invalid state for operation."""
+
+
 ERROR_MAP = {
     'io.podman.ContainerNotFound': ContainerNotFound,
     'io.podman.ErrorOccurred': ErrorOccurred,
     'io.podman.ImageNotFound': ImageNotFound,
+    'io.podman.InvalidState': InvalidState,
     'io.podman.NoContainerRunning': NoContainerRunning,
     'io.podman.NoContainersInPod': NoContainersInPod,
     'io.podman.PodContainerError': PodContainerError,
