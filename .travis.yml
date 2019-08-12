@@ -25,7 +25,7 @@ script:
   - python setup.py bdist_wheel
   - twine check dist/*
   # Execture tests
-  - tox -e pep8
+  - tox
 deploy:
   - provider: pypi
     user: containers-libpod
