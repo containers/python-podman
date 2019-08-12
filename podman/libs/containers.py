@@ -144,7 +144,7 @@ class Container(AttachMixin, StartMixin, collections.UserDict):
         with self._client() as podman:
             results = podman.Commit(self._id, image_name, change, author,
                                     message, pause)
-        return results['image']
+        return results['reply']['id']
 
     def stop(self, timeout=25):
         """Stop container, return id on success."""
@@ -166,20 +166,6 @@ class Container(AttachMixin, StartMixin, collections.UserDict):
         with self._client() as podman:
             podman.RestartContainer(self._id, timeout)
             return self._refresh(podman)
-
-    def rename(self, target):  # pylint: disable=unused-argument
-        """Rename container, return id on success."""
-        with self._client() as podman:
-            # TODO: Need arguments
-            results = podman.RenameContainer()
-        # TODO: fixup objects cached information
-        return results['container']
-
-    def resize_tty(self, width, height):  # pylint: disable=unused-argument
-        """Resize container tty."""
-        with self._client() as podman:
-            # TODO: magic re: attach(), arguments
-            podman.ResizeContainerTty()
 
     def pause(self):
         """Pause container, return id on success."""
