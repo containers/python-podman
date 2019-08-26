@@ -9,6 +9,7 @@ __all__ = [
     'cached_property',
     'datetime_format',
     'datetime_parse',
+    'flatten',
     'fold_keys',
 ]
 
@@ -73,3 +74,20 @@ def datetime_format(dt):
 
     raise ValueError('Unable to format {}. Type {} not supported.'.format(
         dt, type(dt)))
+
+
+def flatten(list_, ltypes=(list, tuple)):
+    """Flatten lists of list into a list."""
+    ltype = type(list_)
+    list_ = list(list_)
+    i = 0
+    while i < len(list_):
+        while isinstance(list_[i], ltypes):
+            if not list_[i]:
+                list_.pop(i)
+                i -= 1
+                break
+            else:
+                list_[i:i + 1] = list_[i]
+        i += 1
+    return ltype(list_)

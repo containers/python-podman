@@ -54,14 +54,14 @@ class TestImages(PodmanTestCase):
         )
         self.assertIsNotNone(img)
         self.assertIn('localhost/alpine-unittest:latest', img.repoTags)
-        self.assertLess(
-            podman.datetime_parse(img.created), datetime.now(timezone.utc))
+        self.assertLess(podman.datetime_parse(img.created),
+                        datetime.now(timezone.utc))
         self.assertTrue(logs)
 
     def test_create(self):
         img_details = self.alpine_image.inspect()
 
-        actual = self.alpine_image.container(command=['sleep',  '1h'])
+        actual = self.alpine_image.container(command=['sleep', '1h'])
         self.assertIsNotNone(actual)
         self.assertEqual(FoldedString(actual.status), 'configured')
 
@@ -82,7 +82,7 @@ class TestImages(PodmanTestCase):
 
     def test_get(self):
         actual = self.pclient.images.get(self.alpine_image.id)
-        self.assertEqual(actual, self.alpine_image)
+        self.assertEqual(actual.id, self.alpine_image.id)
 
     def test_history(self):
         records = []
@@ -102,7 +102,7 @@ class TestImages(PodmanTestCase):
     def test_push(self):
         path = '{}/alpine_push'.format(self.tmpdir)
         target = 'dir:{}'.format(path)
-        self.alpine_image.push(target, tlsverify=False)
+        self.alpine_image.push(target)
 
         self.assertTrue(os.path.isfile(os.path.join(path, 'manifest.json')))
         self.assertTrue(os.path.isfile(os.path.join(path, 'version')))

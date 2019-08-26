@@ -4,7 +4,7 @@ import copy
 import json
 import logging
 
-from . import ConfigDict, fold_keys
+from . import ConfigDict, flatten, fold_keys
 from .containers import Container
 
 
@@ -29,9 +29,7 @@ class Image(collections.UserDict):
     def _split_token(values=None, sep='='):
         if not values:
             return {}
-        return {
-            k: v1 for k, v1 in (v0.split(sep, 1) for v0 in values)
-        }
+        return {k: v1 for k, v1 in (v0.split(sep, 1) for v0 in values)}
 
     def create(self, *args, **kwargs):
         """Create container from image.
@@ -45,8 +43,10 @@ class Image(collections.UserDict):
         config['env'] = self._split_token(details.config.get('env'))
         config['image'] = copy.deepcopy(details.repotags[0])
         config['labels'] = copy.deepcopy(details.labels)
+        # TODO: Are these settings still required?
         config['net_mode'] = 'bridge'
         config['network'] = 'bridge'
+        config['args'] = flatten([config['image'], config['command']])
 
         logging.debug('Image %s: create config: %s', self._id, config)
         with self._client() as podman:
@@ -75,11 +75,18 @@ class Image(collections.UserDict):
         obj = json.loads(results['image'], object_hook=fold_keys())
         return collections.namedtuple('ImageInspect', obj.keys())(**obj)
 
-    def push(self, target, tlsverify=True):
+    def push(self,
+             target,
+             compress=False,
+             manifest_format="",
+             remove_signatures=False,
+             sign_by=""):
         """Copy image to target, return id on success."""
         with self._client() as podman:
-            results = podman.PushImage(self._id, target, tlsverify)
-        return results['image']
+            results = podman.PushImage(self._id, target, compress,
+                                       manifest_format, remove_signatures,
+                                       sign_by)
+        return results['reply']['id']
 
     def remove(self, force=False):
         """Delete image, return id on success.
@@ -118,12 +125,12 @@ class Images():
         """
         if dockerfile is None:
             raise ValueError('"dockerfile" is a required argument.')
-        elif not hasattr(dockerfile, '__iter__'):
+        if not hasattr(dockerfile, '__iter__'):
             raise ValueError('"dockerfile" is required to be an iter.')
 
         if tags is None:
             raise ValueError('"tags" is a required argument.')
-        elif not hasattr(tags, '__iter__'):
+        if not hasattr(tags, '__iter__'):
             raise ValueError('"tags" is required to be an iter.')
 
         config = ConfigDict(dockerfile=dockerfile, tags=tags, **kwargs)
@@ -150,11 +157,25 @@ class Images():
             results = podman.PullImage(source)
         return results['reply']['id']
 
-    def search(self, id_, limit=25):
+    def search(self,
+               id_,
+               limit=25,
+               is_official=None,
+               is_automated=None,
+               star_count=None):
         """Search registries for id."""
+        constraints = {}
+
+        if is_official is not None:
+            constraints['is_official'] = is_official
+        if is_automated is not None:
+            constraints['is_automated'] = is_automated
+        if star_count is not None:
+            constraints['star_count'] = star_count
+
         with self._client() as podman:
-            results = podman.SearchImage(id_, limit)
-        for img in results['images']:
+            results = podman.SearchImages(id_, limit, constraints)
+        for img in results['results']:
             yield collections.namedtuple('ImageSearch', img.keys())(**img)
 
     def get(self, id_):
