@@ -115,12 +115,6 @@ class Pod(collections.UserDict):
             podman.UnpausePod(self._ident)
             return self._refresh(podman)
 
-    def wait(self):
-        """Wait for all containers to exit."""
-        with self._client() as podman:
-            results = podman.WaitPod(self._ident)
-        return results['pod']
-
 
 class Pods():
     """Model for accessing pods."""

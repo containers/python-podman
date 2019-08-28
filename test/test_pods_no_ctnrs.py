@@ -2,7 +2,6 @@ import os
 import unittest
 
 import podman
-import varlink
 
 ident = None
 pod = None
@@ -78,11 +77,8 @@ class TestPodsNoCtnrs(unittest.TestCase):
         with self.assertRaises(podman.NoContainerRunning):
             next(pod.stats())
 
-        with self.assertRaises(varlink.error.MethodNotImplemented):
+        with self.assertRaises(podman.ErrorOccurred):
             pod.top()
-
-        with self.assertRaises(varlink.error.MethodNotImplemented):
-            pod.wait()
 
     def test_999_remove(self):
         global ident, pod
