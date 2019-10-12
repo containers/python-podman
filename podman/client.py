@@ -33,7 +33,6 @@ class BaseClient():
     def factory(cls,
                 uri=None,
                 interface='io.podman',
-                *args,
                 **kwargs):
         """Construct a Client based on input."""
         log_level = os.environ.get('LOG_LEVEL')
