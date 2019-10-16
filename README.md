@@ -7,7 +7,7 @@
 
 ## Status: Active Development
 
-See [libpod](https://github.com/containers/python-podman)
+See [libpod](https://github.com/containers/libpod)
 
 ## Overview
 
