@@ -11,12 +11,12 @@ from .libs import cached_property
 from .libs.containers import Containers
 from .libs.errors import error_factory
 from .libs.images import Images
+from .libs.pods import Pods
 from .libs.system import System
 from .libs.tunnel import Context, Portal, Tunnel
-from .libs.pods import Pods
 
 
-class BaseClient():
+class BaseClient:
     """Context manager for API workers to access varlink."""
 
     def __init__(self, context):
@@ -30,49 +30,62 @@ class BaseClient():
         return self
 
     @classmethod
-    def factory(cls,
-                uri=None,
-                interface='io.podman',
-                **kwargs):
+    def factory(cls, uri=None, interface="io.podman", **kwargs):
         """Construct a Client based on input."""
-        log_level = os.environ.get('LOG_LEVEL')
+        log_level = os.environ.get("PODMAN_LOG_LEVEL")
         if log_level is not None:
             logging.basicConfig(level=logging.getLevelName(log_level.upper()))
+            logging.debug(
+                "Logging level set to %s",
+                logging.getLevelName(logging.getLogger().getEffectiveLevel()),
+            )
 
         if uri is None:
-            raise ValueError('uri is required and cannot be None')
+            raise ValueError("uri is required and cannot be None")
         if interface is None:
-            raise ValueError('interface is required and cannot be None')
+            raise ValueError("interface is required and cannot be None")
 
         unsupported = set(kwargs.keys()).difference(
-            ('uri', 'interface', 'remote_uri', 'identity_file',
-             'ignore_hosts', 'known_hosts'))
+            (
+                "uri",
+                "interface",
+                "remote_uri",
+                "identity_file",
+                "ignore_hosts",
+                "known_hosts",
+            )
+        )
         if unsupported:
-            raise ValueError('Unknown keyword arguments: {}'.format(
-                ', '.join(unsupported)))
+            raise ValueError(
+                "Unknown keyword arguments: {}".format(", ".join(unsupported))
+            )
 
         local_path = urlparse(uri).path
-        if local_path == '':
-            raise ValueError('path is required for uri,'
-                             ' expected format "unix://path_to_socket"')
+        if not local_path:
+            raise ValueError(
+                "path is required for uri,"
+                ' expected format "unix://path_to_socket"'
+            )
 
-        if kwargs.get('remote_uri') is None:
+        if kwargs.get("remote_uri") is None:
             return LocalClient(Context(uri, interface))
 
-        required = ('{} is required, expected format'
-                    ' "ssh://user@hostname[:port]/path_to_socket".')
+        required = (
+            "{} is required, expected format"
+            ' "ssh://user@hostname[:port]/path_to_socket".'
+        )
 
         # Remote access requires the full tuple of information
-        if kwargs.get('remote_uri') is None:
-            raise ValueError(required.format('remote_uri'))
+        if kwargs.get("remote_uri") is None:
+            raise ValueError(required.format("remote_uri"))
 
-        remote = urlparse(kwargs['remote_uri'])
+        remote = urlparse(kwargs["remote_uri"])
         if remote.username is None:
-            raise ValueError(required.format('username'))
-        if remote.path == '':
-            raise ValueError(required.format('path'))
+            raise ValueError(required.format("username"))
+        if remote.path == "":
+            raise ValueError(required.format("path"))
         if remote.hostname is None:
-            raise ValueError(required.format('hostname'))
+            raise ValueError(required.format("hostname"))
 
         return RemoteClient(
             Context(
@@ -83,10 +96,33 @@ class BaseClient():
                 remote.username,
                 remote.hostname,
                 remote.port,
-                kwargs.get('identity_file'),
-                kwargs.get('ignore_hosts'),
-                kwargs.get('known_hosts'),
-            ))
+                kwargs.get("identity_file"),
+                kwargs.get("ignore_hosts"),
+                kwargs.get("known_hosts"),
+            )
+        )
+
+    def open(self):
+        """Open connection to podman service."""
+        self._client = VarlinkClient(address=self._context.uri)
+        self._iface = self._client.open(self._context.interface)
+        logging.debug(
+            "%s opened varlink connection %s",
+            type(self).__name__,
+            str(self._iface),
+        )
+        return self._iface
+
+    def close(self):
+        """Close connection to podman service."""
+        if hasattr(self._client, "close"):
+            self._client.close()  # pylint: disable=no-member
+        self._iface.close()
+        logging.debug(
+            "%s closed varlink connection %s",
+            type(self).__name__,
+            str(self._iface),
+        )
 
 
 class LocalClient(BaseClient):
@@ -94,16 +130,11 @@ class LocalClient(BaseClient):
 
     def __enter__(self):
         """Enter context for LocalClient."""
-        self._client = VarlinkClient(address=self._context.uri)
-        self._iface = self._client.open(self._context.interface)
-        return self._iface
+        return self.open()
 
     def __exit__(self, e_type, e, e_traceback):
         """Cleanup context for LocalClient."""
-        if hasattr(self._client, 'close'):
-            self._client.close()
-        self._iface.close()
-
+        self.close()
         if isinstance(e, VarlinkError):
             raise error_factory(e)
 
@@ -124,26 +155,21 @@ class RemoteClient(BaseClient):
             self._portal[self._context.uri] = tunnel
 
         try:
-            self._client = VarlinkClient(address=self._context.uri)
-            self._iface = self._client.open(self._context.interface)
-            return self._iface
+            return self.open()
         except Exception:
             tunnel.close()
             raise
 
     def __exit__(self, e_type, e, e_traceback):
         """Cleanup context for RemoteClient."""
-        if hasattr(self._client, 'close'):
-            self._client.close()
-        self._iface.close()
-
+        self.close()
         # set timer to shutdown ssh tunnel
         # self._portal.get(self._context.uri).close()
         if isinstance(e, VarlinkError):
             raise error_factory(e)
 
 
-class Client():
+class Client:
     """A client for communicating with a Podman varlink service.
 
     Example:
@@ -160,10 +186,9 @@ class Client():
                               identity_file='~/.ssh/id_rsa')
     """
 
-    def __init__(self,
-                 uri='unix:/run/podman/io.podman',
-                 interface='io.podman',
-                 **kwargs):
+    def __init__(
+        self, uri="unix:/run/podman/io.podman", interface="io.podman", **kwargs
+    ):
         """Construct a podman varlink Client.
 
         uri from default systemd unit file.
@@ -178,12 +203,16 @@ class Client():
             if not System(self._client).ping():
                 raise ConnectionRefusedError(
                     errno.ECONNREFUSED,
-                    ('Failed varlink connection "{}"').format(address))
+                    ('Failed varlink connection "{}"').format(address),
+                )
         except FileNotFoundError:
             raise ConnectionError(
                 errno.ECONNREFUSED,
-                ('Failed varlink connection "{}".'
-                 ' Is podman socket or service running?').format(address))
+                (
+                    'Failed varlink connection "{}".'
+                    " Is podman socket or service running?"
+                ).format(address),
+            )
 
     def __enter__(self):
         """Return `self` upon entering the runtime context."""
@@ -191,7 +220,7 @@ class Client():
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Raise any exception triggered within the runtime context."""
-        pass
+        return
 
     @cached_property
     def system(self):

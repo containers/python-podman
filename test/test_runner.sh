@@ -6,20 +6,29 @@ if [[ $(id -u) != 0 ]]; then
   exit 2
 fi
 
-function usage {
+function usage() {
   echo 1>&2 $0 '[-v] [-h] [test.<TestCase>|test.<TestCase>.<step>]'
 }
 
 while getopts "vh" arg; do
   case $arg in
-    v ) VERBOSE='-v'; export LOG_LEVEL=debug ;;
-    h ) usage ; exit 0 ;;
-    \? ) usage ; exit 2 ;;
+  v)
+    VERBOSE='-v'
+    export PODMAN_LOG_LEVEL=debug
+    ;;
+  h)
+    usage
+    exit 0
+    ;;
+  \?)
+    usage
+    exit 2
+    ;;
   esac
 done
-shift $((OPTIND -1))
+shift $((OPTIND - 1))
 
-function cleanup {
+function cleanup() {
   set +xeuo pipefail
   # aggressive cleanup as tests may crash leaving crap around
   umount '^(shm|nsfs)'
@@ -30,19 +39,19 @@ function cleanup {
 }
 
 # Create temporary directory for storage
-export TMPDIR=`mktemp -d /tmp/podman.XXXXXXXXXX`
+export TMPDIR=$(mktemp -d /tmp/podman.XXXXXXXXXX)
 trap "cleanup $TMPDIR" EXIT
 
-function umount {
+function umount() {
   set +xeuo pipefail
   # xargs -r always ran once, so write any mount points to file first
-  mount |awk "/$1/"' { print $3 }' >${TMPDIR}/mounts
+  mount | awk "/$1/"' { print $3 }' >${TMPDIR}/mounts
   if [[ -s ${TMPDIR}/mounts ]]; then
     xargs <${TMPDIR}/mounts -t umount
   fi
 }
 
-function showlog {
+function showlog() {
   [[ -s $1 ]] && cat <<-EOT
 $1 =====
 $(cat "$1")
@@ -92,18 +101,6 @@ cat >$CNI_CONFIG_PATH/87-podman-bridge.conflist <<-EOT
 }
 EOT
 
-cat >$TMPDIR/ctnr/hello.sh <<-EOT
-echo 'Hello, World'
-exit 0
-EOT
-
-cat >$TMPDIR/ctnr/Dockerfile <<-EOT
-FROM alpine:latest
-COPY ./hello.sh /tmp/
-RUN chmod 755 /tmp/hello.sh
-ENTRYPOINT ["/tmp/hello.sh"]
-EOT
-
 export PODMAN_HOST="unix:${TMPDIR}/podman/io.podman"
 PODMAN_ARGS="--storage-driver=vfs \
   --root=${TMPDIR}/crio \
@@ -112,11 +109,11 @@ PODMAN_ARGS="--storage-driver=vfs \
   --cgroup-manager=cgroupfs \
   "
 if [[ -n $VERBOSE ]]; then
-  PODMAN_ARGS="$PODMAN_ARGS --log-level=$LOG_LEVEL"
+  PODMAN_ARGS="$PODMAN_ARGS --log-level=$PODMAN_LOG_LEVEL"
 fi
 PODMAN="podman $PODMAN_ARGS"
 
-cat <<-EOT |tee /tmp/test_podman.output
+cat <<-EOT | tee /tmp/test_podman.output
 $($PODMAN --version)
 $PODMAN varlink --timeout=0 ${PODMAN_HOST}
 ==========================================
