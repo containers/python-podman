@@ -25,10 +25,7 @@ class PodmanTestCase(unittest.TestCase):
             cmd = list(itertools.chain(*args))
             try:
                 pid = subprocess.Popen(
-                    cmd,
-                    close_fds=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    cmd, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
                 out, err = pid.communicate()
             except OSError as e:
@@ -57,13 +54,9 @@ class PodmanTestCase(unittest.TestCase):
         run_podman(["images"])
 
         run_cmd(["rm", "-f", "{}/alpine_gold.tar".format(tmpdir)])
-        run_podman(
-            ["save", "--output", "{}/alpine_gold.tar".format(tmpdir), "alpine"]
-        )
+        run_podman(["save", "--output", "{}/alpine_gold.tar".format(tmpdir), "alpine"])
 
-        PodmanTestCase.alpine_log = open(
-            os.path.join("/tmp/", "alpine.log"), "w"
-        )
+        PodmanTestCase.alpine_log = open(os.path.join("/tmp/", "alpine.log"), "w")
 
         cmd = ["podman"]
         cmd.extend(podman_args)
@@ -73,9 +66,7 @@ class PodmanTestCase(unittest.TestCase):
             cmd, stdout=PodmanTestCase.alpine_log, stderr=subprocess.STDOUT,
         )
 
-        PodmanTestCase.busybox_log = open(
-            os.path.join("/tmp/", "busybox.log"), "w"
-        )
+        PodmanTestCase.busybox_log = open(os.path.join("/tmp/", "busybox.log"), "w")
 
         cmd = ["podman"]
         cmd.extend(podman_args)
