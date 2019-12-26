@@ -61,7 +61,7 @@ class BaseClient:
             )
 
         local_path = urlparse(uri).path
-        if local_path == "":
+        if not local_path:
             raise ValueError(
                 "path is required for uri," ' expected format "unix://path_to_socket"'
             )
