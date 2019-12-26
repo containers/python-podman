@@ -63,7 +63,8 @@ class BaseClient:
         local_path = urlparse(uri).path
         if not local_path:
             raise ValueError(
-                "path is required for uri," ' expected format "unix://path_to_socket"'
+                "path is required for uri,"
+                ' expected format "unix://path_to_socket"'
             )
 
         if kwargs.get("remote_uri") is None:
