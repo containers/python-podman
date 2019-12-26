@@ -32,9 +32,13 @@ class BaseClient:
     @classmethod
     def factory(cls, uri=None, interface="io.podman", **kwargs):
         """Construct a Client based on input."""
-        log_level = os.environ.get("LOG_LEVEL")
+        log_level = os.environ.get("PODMAN_LOG_LEVEL")
         if log_level is not None:
             logging.basicConfig(level=logging.getLevelName(log_level.upper()))
+            logging.debug(
+                "Logging level set to %s",
+                logging.getLevelName(logging.getLogger().getEffectiveLevel()),
+            )
 
         if uri is None:
             raise ValueError("uri is required and cannot be None")

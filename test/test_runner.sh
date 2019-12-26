@@ -112,7 +112,7 @@ PODMAN_ARGS="--storage-driver=vfs \
   --cgroup-manager=cgroupfs \
   "
 if [[ -n $VERBOSE ]]; then
-  PODMAN_ARGS="$PODMAN_ARGS --log-level=$LOG_LEVEL"
+  PODMAN_ARGS="$PODMAN_ARGS --log-level=$PODMAN_LOG_LEVEL"
 fi
 PODMAN="podman $PODMAN_ARGS"
 

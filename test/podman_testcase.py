@@ -2,18 +2,49 @@
 import contextlib
 import functools
 import itertools
+import logging
 import os
 import subprocess
 import time
 import unittest
+from os import getenv
 
 from varlink import VarlinkError
 
 MethodNotImplemented = "org.varlink.service.MethodNotImplemented"
 
 
+class LogTestCase(type):
+    """LogTestCase wires in a logger handler to handle logging during tests."""
+
+    def __new__(cls, name, bases, dct):
+        setup = dct["setUp"] if "setUp" in dct else lambda self: None
+
+        def wrapped_setUp(self):
+            self.hdlr = logging.StreamHandler(sys.stdout)
+            self.logger.addHandler(self.hdlr)
+
+        dct["setUp"] = wrapped_setUp
+
+        tearDown = dct["tearDown"] if "tearDown" in dct else lambda self: None
+
+        def wrapped_tearDown(self):
+            tearDown(self)
+            self.logger.removeHandler(self.hdlr)
+
+        dct["tearDown"] = wrapped_tearDown
+
+        return type.__new__(cls, name, bases, dct)
+
+
 class PodmanTestCase(unittest.TestCase):
     """Hide the sausage making of initializing storage."""
+
+    __metaclass__ = LogTestCase
+    logger = logging.getLogger("unittestLogger")
+    level = os.environ.get("PODMAN_LOG_LEVEL")
+    if level is not None:
+        logger.setLevel(logging.getLevelName(level.upper()))
 
     @classmethod
     def setUpClass(cls):
