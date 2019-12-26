@@ -92,7 +92,12 @@ class Image(collections.UserDict):
         """Copy image to target, return id on success."""
         with self._client() as podman:
             results = podman.PushImage(
-                self._id, target, compress, manifest_format, remove_signatures, sign_by
+                self._id,
+                target,
+                compress,
+                manifest_format,
+                remove_signatures,
+                sign_by,
             )
         return results["reply"]["id"]
 
@@ -224,7 +229,12 @@ class Images:
         return results["reply"]["id"]
 
     def search(
-        self, id_, limit=25, is_official=None, is_automated=None, star_count=None
+        self,
+        id_,
+        limit=25,
+        is_official=None,
+        is_automated=None,
+        star_count=None,
     ):
         """Search registries for id."""
         constraints = {}
