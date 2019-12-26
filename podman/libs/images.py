@@ -16,13 +16,13 @@ from .containers import Container
 class Image(collections.UserDict):
     """Model for an Image."""
 
-    def __init__(self, client, id, data):
+    def __init__(self, client, id_, data):
         """Construct Image Model."""
         super().__init__(data)
         for k, v in data.items():
             setattr(self, k, v)
 
-        self._id = id
+        self._id = id_
         self._client = client
 
         assert (
