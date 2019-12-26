@@ -1,8 +1,13 @@
 """Models for manipulating images in/to/from storage."""
 import collections
 import copy
+import io
 import json
 import logging
+import os
+import tarfile
+import tempfile
+from os.path import abspath, basename, curdir
 
 from . import ConfigDict, flatten, fold_keys
 from .containers import Container
@@ -121,28 +126,84 @@ class Images:
         for img in results["images"]:
             yield Image(self._client, img["id"], img)
 
-    def build(self, dockerfile=None, tags=None, **kwargs):
+    def build(
+        self, context_directory=None, containerfiles=None, tags=None, **kwargs
+    ):
         """Build container from image.
 
         See podman-build.1.md for kwargs details.
         """
-        if dockerfile is None:
-            raise ValueError('"dockerfile" is a required argument.')
-        if not hasattr(dockerfile, "__iter__"):
-            raise ValueError('"dockerfile" is required to be an iter.')
+        if not (containerfiles or context_directory):
+            raise ValueError(
+                'Either "containerfiles" or "context_directory"'
+                " is a required argument."
+            )
 
-        if tags is None:
+        if context_directory:
+            if not os.path.isdir(context_directory):
+                raise ValueError('"context_directory" must be a directory.')
+            context_directory = os.path.abspath(context_directory)
+        else:
+            context_directory = os.getcwd()
+
+        if not containerfiles:
+            containerfiles = []
+            for entry in os.walk(context_directory):
+                containerfiles.append(entry)
+
+        if containerfiles and not isinstance(containerfiles, (list, tuple)):
+            raise ValueError(
+                '"containerfiles" is required to be a list or tuple.'
+            )
+
+        if not tags:
             raise ValueError('"tags" is a required argument.')
-        if not hasattr(tags, "__iter__"):
-            raise ValueError('"tags" is required to be an iter.')
+        if not isinstance(tags, (list, tuple)):
+            raise ValueError('"tags" is required to be a list or tuple.')
 
-        config = ConfigDict(dockerfile=dockerfile, tags=tags, **kwargs)
-        with self._client() as podman:
-            result = podman.BuildImage(config)
-        return (
-            self.get(result["image"]["id"]),
-            (line for line in result["image"]["logs"]),
+        config = ConfigDict(
+            dockerfiles=containerfiles, tags=tags[1:], output=tags[0], **kwargs
         )
+
+        with io.BytesIO() as stream:
+            # Compile build context in memory tar file
+            with tarfile.open(mode="w:gz", fileobj=stream) as tar:
+                for name in containerfiles:
+                    tar.addfile(tar.gettarinfo(fileobj=open(name)))
+
+            if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+                # If debugging save a copy of the tar file we're going
+                #  to send to service
+                tar = os.path.join(tempfile.gettempdir(), "buildContext.tgz")
+                with open(tar, "wb") as file:
+                    file.write(stream.getvalue())
+
+            with self._client() as podman:
+                length = stream.seek(0, io.SEEK_END)
+                remote_location = podman.SendFile("", length, _upgrade=True)
+
+                logging.debug(
+                    "Build Tarball sent to host %s: %d", podman, length
+                )
+                # TODO: When available use the convenience routines
+                # pylint: disable=protected-access
+                podman._connection.send(stream.getvalue())
+
+        config["contextDir"] = remote_location["file_handle"]
+        clnt = self._client().open()
+        output = clnt.BuildImage(build=config, _more=True)
+
+        def wrapper():
+            v = None
+            for v in output:
+                if not v["image"]["logs"]:
+                    break
+                yield v["image"]["logs"], None
+            if v:
+                yield None, self.get(v["image"]["id"])
+            clnt.close()
+
+        return wrapper
 
     def delete_unused(self):
         """Delete Images not associated with a container."""

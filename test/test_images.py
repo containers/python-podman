@@ -2,6 +2,7 @@ import itertools
 import os
 import unittest
 from collections import Counter
+from contextlib import closing
 from datetime import datetime, timezone
 from test.podman_testcase import PodmanTestCase
 
@@ -51,16 +52,33 @@ class TestImages(PodmanTestCase):
         self.assertGreaterEqual(len(actual), 2)
         self.assertIsNotNone(self.alpine_image)
 
-    @unittest.skip("TODO: missing buildah json file")
     def test_build(self):
         path = os.path.join(self.tmpdir, "ctnr", "Dockerfile")
-        img, logs = self.pclient.images.build(
-            dockerfile=[path], tags=["alpine-unittest"],
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as stream:
+            stream.write("FROM alpine")
+
+        builder = self.pclient.images.build(
+            containerfiles=[path], tags=["alpine-unittest"]
         )
+        self.assertIsNotNone(builder)
+
+        for line, img in builder():
+            # drain the generator...
+            continue
+
         self.assertIsNotNone(img)
         self.assertIn("localhost/alpine-unittest:latest", img.repoTags)
-        self.assertLess(podman.datetime_parse(img.created), datetime.now(timezone.utc))
-        self.assertTrue(logs)
+        self.assertLess(
+            podman.datetime_parse(img.created), datetime.now(timezone.utc)
+        )
+
+    def test_build_failures(self):
+        with self.assertRaises(ValueError):
+            self.pclient.images.build()
+
+        with self.assertRaises(ValueError):
+            self.pclient.images.build(tags=["busted"])
 
     def test_create(self):
         img_details = self.alpine_image.inspect()
@@ -104,8 +122,8 @@ class TestImages(PodmanTestCase):
         self.assertEqual(actual.id, self.alpine_image.id)
 
     def test_push(self):
-        path = "{}/alpine_push".format(self.tmpdir)
-        target = "dir:{}".format(path)
+        path = os.path.join(self.tmpdir, "alpine_push")
+        target = "dir:" + path
         self.alpine_image.push(target)
 
         self.assertTrue(os.path.isfile(os.path.join(path, "manifest.json")))
@@ -122,6 +140,11 @@ class TestImages(PodmanTestCase):
         # assertRaises doesn't follow the import name :(
         with self.assertRaises(podman.ErrorOccurred):
             self.alpine_image.remove()
+
+        # Work around for issue in service
+        for ctnr in self.pclient.containers.list():
+            if ctnr.running:
+                ctnr.stop()
 
         actual = self.alpine_image.remove(force=True)
         self.assertEqual(self.alpine_image.id, actual)
