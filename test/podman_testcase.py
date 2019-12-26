@@ -11,26 +11,26 @@ import unittest
 from varlink import VarlinkError
 
 
-MethodNotImplemented = "org.varlink.service.MethodNotImplemented"
+MethodNotImplemented = "org.varlink.service.MethodNotImplemented"  # pylint: disable=invalid-name
 
 
 class LogTestCase(type):
     """LogTestCase wires in a logger handler to handle logging during tests."""
 
     def __new__(cls, name, bases, dct):
-        def wrapped_setUp(self):
+        def wrapped_setup(self):
             self.hdlr = logging.StreamHandler(sys.stdout)
             self.logger.addHandler(self.hdlr)
 
-        dct["setUp"] = wrapped_setUp
+        dct["setUp"] = wrapped_setup
 
-        tearDown = dct["tearDown"] if "tearDown" in dct else lambda self: None
+        teardown = dct["tearDown"] if "tearDown" in dct else lambda self: None
 
-        def wrapped_tearDown(self):
-            tearDown(self)
+        def wrapped_teardown(self):
+            teardown(self)
             self.logger.removeHandler(self.hdlr)
 
-        dct["tearDown"] = wrapped_tearDown
+        dct["tearDown"] = wrapped_teardown
 
         return type.__new__(cls, name, bases, dct)
 
@@ -124,17 +124,17 @@ class PodmanTestCase(unittest.TestCase):
         """Fixture to clean up after podman unittest."""
         try:
             PodmanTestCase.alpine_process.kill()
-            assert 0 == PodmanTestCase.alpine_process.wait(500)
+            assert PodmanTestCase.alpine_process.wait(500) == 0
             delattr(PodmanTestCase, "alpine_process")
 
             PodmanTestCase.busybox_process.kill()
-            assert 0 == PodmanTestCase.busybox_process.wait(500)
+            assert PodmanTestCase.busybox_process.wait(500) == 0
         except Exception as e:
             print("Exception: {}".format(e))
             raise
 
     @contextlib.contextmanager
-    def assertRaisesNotImplemented(self):
+    def assertRaisesNotImplemented(self):  # pylint: disable=invalid-name
         """Sugar for unimplemented varlink methods."""
         with self.assertRaisesRegex(VarlinkError, MethodNotImplemented):
             yield
