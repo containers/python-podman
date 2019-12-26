@@ -7,9 +7,8 @@ import os
 import subprocess
 import time
 import unittest
-from os import getenv
-
 from varlink import VarlinkError
+
 
 MethodNotImplemented = "org.varlink.service.MethodNotImplemented"
 
