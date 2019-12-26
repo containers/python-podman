@@ -59,11 +59,11 @@ class PodmanTestCase(unittest.TestCase):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
-                out, err = pid.communicate()
+                out, _ = pid.communicate()
             except OSError as e:
-                print("{}: {}({})".format(cmd, e.strerror, e.returncode))
+                print("{}: {}({})".format(cmd, e.strerror, e.errno))
             except ValueError as e:
-                print("{}: {}".format(cmd, e.message))
+                print("{}: {}".format(cmd, e))
                 raise
             else:
                 return out.strip()
@@ -79,8 +79,8 @@ class PodmanTestCase(unittest.TestCase):
 
         run_podman = functools.partial(run_cmd, ["podman"], podman_args)
 
-        id = run_podman(["pull", "alpine"])
-        setattr(PodmanTestCase, "alpine_id", id)
+        id_ = run_podman(["pull", "alpine"])
+        setattr(PodmanTestCase, "alpine_id", id_)
 
         run_podman(["pull", "busybox"])
         run_podman(["images"])
