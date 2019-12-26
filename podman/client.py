@@ -101,22 +101,39 @@ class BaseClient:
             )
         )
 
+    def open(self):
+        """Open connection to podman service."""
+        self._client = VarlinkClient(address=self._context.uri)
+        self._iface = self._client.open(self._context.interface)
+        logging.debug(
+            "%s opened varlink connection %s",
+            type(self).__name__,
+            str(self._iface),
+        )
+        return self._iface
+
+    def close(self):
+        """Close connection to podman service."""
+        if hasattr(self._client, "close"):
+            self._client.close()  # pylint: disable=no-member
+        self._iface.close()
+        logging.debug(
+            "%s closed varlink connection %s",
+            type(self).__name__,
+            str(self._iface),
+        )
+
 
 class LocalClient(BaseClient):
     """Context manager for API workers to access varlink."""
 
     def __enter__(self):
         """Enter context for LocalClient."""
-        self._client = VarlinkClient(address=self._context.uri)
-        self._iface = self._client.open(self._context.interface)
-        return self._iface
+        return self.open()
 
     def __exit__(self, e_type, e, e_traceback):
         """Cleanup context for LocalClient."""
-        if hasattr(self._client, "close"):
-            self._client.close()
-        self._iface.close()
-
+        self.close()
         if isinstance(e, VarlinkError):
             raise error_factory(e)
 
@@ -137,19 +154,14 @@ class RemoteClient(BaseClient):
             self._portal[self._context.uri] = tunnel
 
         try:
-            self._client = VarlinkClient(address=self._context.uri)
-            self._iface = self._client.open(self._context.interface)
-            return self._iface
+            return self.open()
         except Exception:
             tunnel.close()
             raise
 
     def __exit__(self, e_type, e, e_traceback):
         """Cleanup context for RemoteClient."""
-        if hasattr(self._client, "close"):
-            self._client.close()
-        self._iface.close()
-
+        self.close()
         # set timer to shutdown ssh tunnel
         # self._portal.get(self._context.uri).close()
         if isinstance(e, VarlinkError):
@@ -207,7 +219,7 @@ class Client:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Raise any exception triggered within the runtime context."""
-        pass
+        return
 
     @cached_property
     def system(self):
