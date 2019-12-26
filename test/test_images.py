@@ -130,7 +130,9 @@ class TestImages(PodmanTestCase):
         self.assertTrue(os.path.isfile(os.path.join(path, "version")))
 
     def test_tag(self):
-        self.assertEqual(self.alpine_image.id, self.alpine_image.tag("alpine:fubar"))
+        self.assertEqual(
+            self.alpine_image.id, self.alpine_image.tag("alpine:fubar")
+        )
         self.loadCache()
         self.assertIn("localhost/alpine:fubar", self.alpine_image.repoTags)
 
