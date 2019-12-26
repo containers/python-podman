@@ -1,4 +1,5 @@
 """Base for podman tests."""
+import sys
 import contextlib
 import functools
 import itertools
