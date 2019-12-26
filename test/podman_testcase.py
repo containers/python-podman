@@ -18,8 +18,6 @@ class LogTestCase(type):
     """LogTestCase wires in a logger handler to handle logging during tests."""
 
     def __new__(cls, name, bases, dct):
-        setup = dct["setUp"] if "setUp" in dct else lambda self: None
-
         def wrapped_setUp(self):
             self.hdlr = logging.StreamHandler(sys.stdout)
             self.logger.addHandler(self.hdlr)
