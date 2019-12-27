@@ -36,7 +36,7 @@ class Image(collections.UserDict):
             return {}
         return {k: v1 for k, v1 in (v0.split(sep, 1) for v0 in values)}
 
-    def create(self, *args, **kwargs):
+    def create(self, **kwargs):
         """Create container from image.
 
         Pulls defaults from image.inspect()
