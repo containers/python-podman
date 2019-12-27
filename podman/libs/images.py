@@ -7,7 +7,6 @@ import logging
 import os
 import tarfile
 import tempfile
-from os.path import abspath, basename, curdir
 
 from . import ConfigDict, flatten, fold_keys
 from .containers import Container
