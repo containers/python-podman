@@ -63,7 +63,8 @@ class TestImages(PodmanTestCase):
         self.assertIsNotNone(builder)
 
         *_, last_element = builder()  # drain the builder generator
-        img = last_element[1]  # each element from builder is a tuple (line, image)
+        # Each element from builder is a tuple (line, image)
+        img = last_element[1]
 
         self.assertIsNotNone(img)
         self.assertIn("localhost/alpine-unittest:latest", img.repoTags)
