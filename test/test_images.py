@@ -2,7 +2,6 @@ import itertools
 import os
 import unittest
 from collections import Counter
-from contextlib import closing
 from datetime import datetime, timezone
 from test.podman_testcase import PodmanTestCase
 
