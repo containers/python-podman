@@ -2,6 +2,7 @@ import itertools
 import os
 import unittest
 from collections import Counter
+from contextlib import closing
 from datetime import datetime, timezone
 from test.podman_testcase import PodmanTestCase
 
@@ -19,8 +20,8 @@ class TestImages(PodmanTestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.tmpdir = os.environ['TMPDIR']
-        self.host = os.environ['PODMAN_HOST']
+        self.tmpdir = os.environ["TMPDIR"]
+        self.host = os.environ["PODMAN_HOST"]
 
         self.pclient = podman.Client(self.host)
         self.images = self.loadCache()
@@ -33,10 +34,16 @@ class TestImages(PodmanTestCase):
             self.images = list(pclient.images.list())
 
         self.alpine_image = next(
-            iter([
-                i for i in self.images
-                if 'docker.io/library/alpine:latest' in i['repoTags']
-            ] or []), None)
+            iter(
+                [
+                    i
+                    for i in self.images
+                    if "docker.io/library/alpine:latest" in i["repoTags"]
+                ]
+                or []
+            ),
+            None,
+        )
 
         return self.images
 
@@ -45,36 +52,51 @@ class TestImages(PodmanTestCase):
         self.assertGreaterEqual(len(actual), 2)
         self.assertIsNotNone(self.alpine_image)
 
-    @unittest.skip('TODO: missing buildah json file')
     def test_build(self):
-        path = os.path.join(self.tmpdir, 'ctnr', 'Dockerfile')
-        img, logs = self.pclient.images.build(
-            dockerfile=[path],
-            tags=['alpine-unittest'],
+        path = os.path.join(self.tmpdir, "ctnr", "Dockerfile")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as stream:
+            stream.write("FROM alpine")
+
+        builder = self.pclient.images.build(
+            containerfiles=[path], tags=["alpine-unittest"]
         )
+        self.assertIsNotNone(builder)
+
+        for line, img in builder():
+            # drain the generator...
+            continue
+
         self.assertIsNotNone(img)
-        self.assertIn('localhost/alpine-unittest:latest', img.repoTags)
-        self.assertLess(podman.datetime_parse(img.created),
-                        datetime.now(timezone.utc))
-        self.assertTrue(logs)
+        self.assertIn("localhost/alpine-unittest:latest", img.repoTags)
+        self.assertLess(
+            podman.datetime_parse(img.created), datetime.now(timezone.utc)
+        )
+
+    def test_build_failures(self):
+        with self.assertRaises(ValueError):
+            self.pclient.images.build()
+
+        with self.assertRaises(ValueError):
+            self.pclient.images.build(tags=["busted"])
 
     def test_create(self):
         img_details = self.alpine_image.inspect()
 
-        actual = self.alpine_image.container(command=['sleep', '1h'])
+        actual = self.alpine_image.container(command=["sleep", "1h"])
         self.assertIsNotNone(actual)
-        self.assertEqual(FoldedString(actual.status), 'configured')
+        self.assertEqual(FoldedString(actual.status), "configured")
 
         ctnr = actual.start()
-        self.assertEqual(FoldedString(ctnr.status), 'running')
+        self.assertEqual(FoldedString(ctnr.status), "running")
 
         ctnr_details = ctnr.inspect()
-        for e in img_details.config['env']:
-            self.assertIn(e, ctnr_details.config['env'])
+        for e in img_details.config["env"]:
+            self.assertIn(e, ctnr_details.config["env"])
 
     def test_export(self):
-        path = os.path.join(self.tmpdir, 'alpine_export.tar')
-        target = 'oci-archive:{}:latest'.format(path)
+        path = os.path.join(self.tmpdir, "alpine_export.tar")
+        target = "oci-archive:{}:latest".format(path)
 
         actual = self.alpine_image.export(target, False)
         self.assertTrue(actual)
@@ -88,7 +110,7 @@ class TestImages(PodmanTestCase):
         records = []
         bucket = Counter()
         for record in self.alpine_image.history():
-            self.assertIn(record.id, (self.alpine_image.id, '<missing>'))
+            self.assertIn(record.id, (self.alpine_image.id, "<missing>"))
             bucket[record.id] += 1
             records.append(record)
 
@@ -100,18 +122,19 @@ class TestImages(PodmanTestCase):
         self.assertEqual(actual.id, self.alpine_image.id)
 
     def test_push(self):
-        path = '{}/alpine_push'.format(self.tmpdir)
-        target = 'dir:{}'.format(path)
+        path = os.path.join(self.tmpdir, "alpine_push")
+        target = "dir:" + path
         self.alpine_image.push(target)
 
-        self.assertTrue(os.path.isfile(os.path.join(path, 'manifest.json')))
-        self.assertTrue(os.path.isfile(os.path.join(path, 'version')))
+        self.assertTrue(os.path.isfile(os.path.join(path, "manifest.json")))
+        self.assertTrue(os.path.isfile(os.path.join(path, "version")))
 
     def test_tag(self):
-        self.assertEqual(self.alpine_image.id,
-                         self.alpine_image.tag('alpine:fubar'))
+        self.assertEqual(
+            self.alpine_image.id, self.alpine_image.tag("alpine:fubar")
+        )
         self.loadCache()
-        self.assertIn('localhost/alpine:fubar', self.alpine_image.repoTags)
+        self.assertIn("localhost/alpine:fubar", self.alpine_image.repoTags)
 
     def test_remove(self):
         before = self.loadCache()
@@ -119,6 +142,11 @@ class TestImages(PodmanTestCase):
         # assertRaises doesn't follow the import name :(
         with self.assertRaises(podman.ErrorOccurred):
             self.alpine_image.remove()
+
+        # Work around for issue in service
+        for ctnr in self.pclient.containers.list():
+            if ctnr.running:
+                ctnr.stop()
 
         actual = self.alpine_image.remove(force=True)
         self.assertEqual(self.alpine_image.id, actual)
@@ -131,17 +159,16 @@ class TestImages(PodmanTestCase):
     def test_import_delete_unused(self):
         before = self.loadCache()
         # create unused image, so we have something to delete
-        source = os.path.join(self.tmpdir, 'alpine_gold.tar')
+        source = os.path.join(self.tmpdir, "alpine_gold.tar")
         new_img = self.pclient.images.import_image(
-            source,
-            'alpine2:latest',
-            'unittest.test_import',
+            source, "alpine2:latest", "unittest.test_import",
         )
         after = self.loadCache()
 
         self.assertEqual(len(before) + 1, len(after))
         self.assertIsNotNone(
-            next(iter([i for i in after if new_img in i['id']] or []), None))
+            next(iter([i for i in after if new_img in i["id"]] or []), None)
+        )
 
         actual = self.pclient.images.delete_unused()
         self.assertIn(new_img, actual)
@@ -154,21 +181,22 @@ class TestImages(PodmanTestCase):
 
     def test_pull(self):
         before = self.loadCache()
-        actual = self.pclient.images.pull('prom/busybox:latest')
+        actual = self.pclient.images.pull("prom/busybox:latest")
         after = self.loadCache()
 
         self.assertEqual(len(before) + 1, len(after))
         self.assertIsNotNone(
-            next(iter([i for i in after if actual in i['id']] or []), None))
+            next(iter([i for i in after if actual in i["id"]] or []), None)
+        )
 
     def test_search(self):
-        actual = self.pclient.images.search('alpine', 25)
+        actual = self.pclient.images.search("alpine", 25)
         names, length = itertools.tee(actual)
 
         for img in names:
-            self.assertIn('alpine', img.name)
+            self.assertIn("alpine", img.name)
         self.assertTrue(0 < len(list(length)) <= 25)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
