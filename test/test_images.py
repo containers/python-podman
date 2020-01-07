@@ -2,7 +2,6 @@ import itertools
 import os
 import unittest
 from collections import Counter
-from contextlib import closing
 from datetime import datetime, timezone
 from test.podman_testcase import PodmanTestCase
 
@@ -63,9 +62,9 @@ class TestImages(PodmanTestCase):
         )
         self.assertIsNotNone(builder)
 
-        for line, img in builder():
-            # drain the generator...
-            continue
+        *_, last_element = builder()  # drain the builder generator
+        # Each element from builder is a tuple (line, image)
+        img = last_element[1]
 
         self.assertIsNotNone(img)
         self.assertIn("localhost/alpine-unittest:latest", img.repoTags)

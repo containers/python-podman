@@ -1,4 +1,5 @@
 """Base for podman tests."""
+import sys
 import contextlib
 import functools
 import itertools
@@ -7,32 +8,29 @@ import os
 import subprocess
 import time
 import unittest
-from os import getenv
-
 from varlink import VarlinkError
 
-MethodNotImplemented = "org.varlink.service.MethodNotImplemented"
+
+MethodNotImplemented = "org.varlink.service.MethodNotImplemented"  # pylint: disable=invalid-name
 
 
 class LogTestCase(type):
     """LogTestCase wires in a logger handler to handle logging during tests."""
 
     def __new__(cls, name, bases, dct):
-        setup = dct["setUp"] if "setUp" in dct else lambda self: None
-
-        def wrapped_setUp(self):
+        def wrapped_setup(self):
             self.hdlr = logging.StreamHandler(sys.stdout)
             self.logger.addHandler(self.hdlr)
 
-        dct["setUp"] = wrapped_setUp
+        dct["setUp"] = wrapped_setup
 
-        tearDown = dct["tearDown"] if "tearDown" in dct else lambda self: None
+        teardown = dct["tearDown"] if "tearDown" in dct else lambda self: None
 
-        def wrapped_tearDown(self):
-            tearDown(self)
+        def wrapped_teardown(self):
+            teardown(self)
             self.logger.removeHandler(self.hdlr)
 
-        dct["tearDown"] = wrapped_tearDown
+        dct["tearDown"] = wrapped_teardown
 
         return type.__new__(cls, name, bases, dct)
 
@@ -61,11 +59,11 @@ class PodmanTestCase(unittest.TestCase):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
-                out, err = pid.communicate()
+                out, _ = pid.communicate()
             except OSError as e:
-                print("{}: {}({})".format(cmd, e.strerror, e.returncode))
+                print("{}: {}({})".format(cmd, e.strerror, e.errno))
             except ValueError as e:
-                print("{}: {}".format(cmd, e.message))
+                print("{}: {}".format(cmd, e))
                 raise
             else:
                 return out.strip()
@@ -81,8 +79,8 @@ class PodmanTestCase(unittest.TestCase):
 
         run_podman = functools.partial(run_cmd, ["podman"], podman_args)
 
-        id = run_podman(["pull", "alpine"])
-        setattr(PodmanTestCase, "alpine_id", id)
+        id_ = run_podman(["pull", "alpine"])
+        setattr(PodmanTestCase, "alpine_id", id_)
 
         run_podman(["pull", "busybox"])
         run_podman(["images"])
@@ -126,17 +124,17 @@ class PodmanTestCase(unittest.TestCase):
         """Fixture to clean up after podman unittest."""
         try:
             PodmanTestCase.alpine_process.kill()
-            assert 0 == PodmanTestCase.alpine_process.wait(500)
+            assert PodmanTestCase.alpine_process.wait(500) == 0
             delattr(PodmanTestCase, "alpine_process")
 
             PodmanTestCase.busybox_process.kill()
-            assert 0 == PodmanTestCase.busybox_process.wait(500)
+            assert PodmanTestCase.busybox_process.wait(500) == 0
         except Exception as e:
             print("Exception: {}".format(e))
             raise
 
     @contextlib.contextmanager
-    def assertRaisesNotImplemented(self):
+    def assertRaisesNotImplemented(self):  # pylint: disable=invalid-name
         """Sugar for unimplemented varlink methods."""
         with self.assertRaisesRegex(VarlinkError, MethodNotImplemented):
             yield
