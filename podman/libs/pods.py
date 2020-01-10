@@ -115,6 +115,18 @@ class Pod(collections.UserDict):
             podman.UnpausePod(self._ident)
             return self._refresh(podman)
 
+    def generate_kub(self, service=True):
+        """Generates a Kubernetes v1 Pod description of a Podman container"""
+        with self._client() as podman:
+            results = podman.GenerateKube(self._ident, service)
+        return results['pod']
+
+    def state_data(self):
+        """Returns the container's state config in string form."""
+        with self._client() as podman:
+            results = podman.PodStateData(self._id)
+        return results['config']
+
 
 class Pods():
     """Model for accessing pods."""
@@ -153,5 +165,19 @@ class Pods():
         """List all pods."""
         with self._client() as podman:
             results = podman.ListPods()
+        for pod in results['pods']:
+            yield Pod(self._client, pod['id'], pod)
+
+    def get_by_status(self, statuses):
+        """Get pods by statuses"""
+        with self._client() as podman:
+            results = podman.GetPodsByStatus(statuses)
+        return results['containers']
+
+    def get_by_context(self, all=True, latest=False, args=[]):
+        """Get pods ids or names depending on all, latest, or a list of
+        pods names"""
+        with self._client() as podman:
+            results = podman.GetPodsByContext(all, latest, args)
         for pod in results['pods']:
             yield Pod(self._client, pod['id'], pod)

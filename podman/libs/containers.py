@@ -205,6 +205,96 @@ class Container(AttachMixin, StartMixin, collections.UserDict):
             results = podman.GetContainerLogs(self._id)
         yield from results['container']
 
+    def health_check_run(self):
+        """Executes defined container's healthcheck command
+        and returns the container's health status.."""
+        with self._client() as podman:
+            result = podman.HealthCheckRun(self._id)
+        yield result['healthCheckStatus']
+
+    def get_stats_with_history(self, previous_stats):
+        """Takes a previous set of container statistics and uses
+        libpod functions to calculate the containers statistics based on
+        current and previous measurements."""
+        with self._client() as podman:
+            results = podman.GetContainerStatsWithHistory(previous_stats)
+        return results['container']
+
+    def init(self):
+        """Initializes the container."""
+        with self._client() as podman:
+            results = podman.InitContainer(self._id)
+        return results['container']
+
+    def attach_control(self):
+        """Sets up the ability to remotely attach to the container console."""
+        with self._client() as podman:
+            podman.AttachControl(self._id)
+
+    def checkpoint(self, keep=True, leaveRunning=True, tcpEstablished=True):
+        """performs a checkpopint on the container."""
+        with self._client() as podman:
+            results = podman.ContainerCheckpoint(
+                self._id,
+                keep,
+                leaveRunning,
+                tcpEstablished)
+        return results['id']
+
+    def restore(self, keep=True, tcpEstablished=True):
+        """Restores a container that has been checkpointed."""
+        with self._client() as podman:
+            results = podman.ContainerRestore(
+                self._id,
+                keep,
+                tcpEstablished)
+        return results['id']
+
+    def run_label(self, runlabel):
+        """Executes a command as described by a given container image label."""
+        with self._client() as podman:
+            podman.ContainerRunlabel(runlabel)
+
+    def exec(self, opts):
+        """Executes a command in the container."""
+        with self._client() as podman:
+            podman.ExecContainer(opts)
+
+    def mount(self):
+        """Mounts the container."""
+        with self._client() as podman:
+            results = podman.MountContainer(self._id)
+        return results['path']
+
+    def umount(self, force=False):
+        """Mounts the container."""
+        with self._client() as podman:
+            podman.UnmountContainer(self._id, force)
+
+    def config(self):
+        """Returns container's config in string form."""
+        with self._client() as podman:
+            results = podman.ContainerConfig(self._id)
+        return results['config']
+
+    def artifacts(self, artifactName):
+        """Returns the container's artifacts in string form."""
+        with self._client() as podman:
+            results = podman.ContainerArtifacts(self._id, artifactName)
+        return results['config']
+
+    def inspect_data(self, size=True):
+        """Returns the container's inspect data in string form."""
+        with self._client() as podman:
+            results = podman.ContainerInspectData(self._id, size)
+        return results['config']
+
+    def state_data(self):
+        """Returns the container's state config in string form."""
+        with self._client() as podman:
+            results = podman.ContainerStateData(self._id)
+        return results['config']
+
 
 class Containers():
     """Model for Containers collection."""
@@ -232,3 +322,54 @@ class Containers():
             cntr = podman.GetContainer(id_)
         return Container(self._client, cntr['container']['id'],
                          cntr['container'])
+
+    def get_by_status(self, status):
+        """Get containers by status"""
+        with self._client() as podman:
+            results = podman.GetContainersByStatus(status)
+        for cntr in results['containers']:
+            yield Container(self._client, cntr['id'], cntr, refresh=False)
+
+    def get_by_context(self, all=True, latest=False, args=[]):
+        """Get containers ids or names depending on all, latest, or a list of
+        container names"""
+        with self._client() as podman:
+            results = podman.GetContainersByContext(all, latest, args)
+        for cntr in results['containers']:
+            yield Container(self._client, cntr['id'], cntr, refresh=False)
+
+    def logs(self,
+             names,
+             follow=True,
+             latest=True,
+             since="",
+             tail=None,
+             timestamps=True):
+        """Get containers ids or names and returns the logs
+        of these containers"""
+        with self._client() as podman:
+            results = podman.GetContainersLogs(
+                names,
+                follow,
+                latest,
+                since,
+                tail,
+                timestamps
+            )
+        return results['log']
+
+    def exists(self, id_):
+        """Returns a bool as to whether the container exists in
+        local storage."""
+        with self._client() as podman:
+            exist = podman.ContainerExists(id_)
+            if exist['exists'] == 0:
+                return True
+        return False
+
+    def list_mounts(self):
+        """gathers all the mounted container mount points and returns
+        them as an array of strings."""
+        with self._client() as podman:
+            results = podman.ListContainerMounts()
+        return results['mounts']

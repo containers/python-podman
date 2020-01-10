@@ -38,3 +38,15 @@ class System():
         with self._client() as podman:
             response = podman.GetVersion()
         return 'version' in response
+
+    def receive_file(self, path, delete=True):
+        """Allows the host to send a remote client a file."""
+        with self._client() as podman:
+            response = podman.ReceiveFile(path, delete)
+        return response['len']
+
+    def get_events(self, filters=[], since=None, until=None):
+        """Returns known libpod events filtered by the options provided."""
+        with self._client() as podman:
+            response = podman.GetEvent(filters, since, until)
+        return response['events']
