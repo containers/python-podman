@@ -20,6 +20,7 @@ Provide a stable API to call into.
 ### Requirements
 
 * Python 3.5+
+  * See [How to install Python 3 on Red Hat Enterprise Linux](https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/) if your installed version of Python is too old.
 * OpenSSH 6.7+
 * Python dependencies in requirements.txt
 
