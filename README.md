@@ -15,6 +15,8 @@ Python podman library.
 
 Provide a stable API to call into.
 
+**Notice:** The varlink interface to Podman is currently deprecated and in maintenance mode.  When Podman version 2.0 is released in 2020, it will include a fully supported REST API that will replace the varlink interface.  The varlink interface will be removed from Podman at a later release.  Starting with Podman v1.8.0, the REST API is available for test usage.  The documentation for the REST API resides [here](http://docs.podman.io/en/latest/_static/api.html#operation/changesContainer).
+
 ## Releases
 
 ### Requirements
