@@ -51,7 +51,11 @@ class Image(collections.UserDict):
         # TODO: Are these settings still required?
         config["net_mode"] = "bridge"
         config["network"] = "bridge"
-        config["args"] = flatten([config["image"], config["command"]])
+        
+        try:
+            config['args'] = flatten([config['image'], config['command']])
+        except KeyError:
+            config['args'] = flatten([config['image']])
 
         logging.debug("Image %s: create config: %s", self._id, config)
         with self._client() as podman:
