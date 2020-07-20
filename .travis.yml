@@ -25,6 +25,11 @@ script:
   - twine check dist/*
   # Execture tests
   - tox
+  # While many deltas exists between python-podman version and libpod version
+  # we ask to synchronize.sh to don't exit "1" to avoid to get lot of
+  # well know issues, in other word we will only display errors in CI job log
+  # but we will consider that everything work fine with that.
+  - ./tools/synchronize.sh --ignore
 deploy:
   - provider: pypi
     user: containers-libpod

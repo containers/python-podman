@@ -119,6 +119,13 @@ class Image(collections.UserDict):
             results = podman.TagImage(self._id, tag)
         return results["image"]
 
+    def save(self, output, format_type="oci-archive"):
+        """Save the image from the local image storage to a tarball."""
+        options = {'Name': self._id, 'Output': output, 'Format': format_type}
+        with self._client() as podman:
+            results = podman.ImageSave(options)
+        return results["reply"]
+
 
 class Images:
     """Model for Images collection."""
@@ -259,3 +266,23 @@ class Images:
         with self._client() as podman:
             result = podman.GetImage(id_)
         return Image(self._client, result["image"]["id"], result["image"])
+
+    def exists(self, id_):
+        """Returns a bool as to whether the image exists in local storage."""
+        with self._client() as podman:
+            exist = podman.ImageExists(id_)
+            if exist['exists'] == 0:
+                return True
+        return False
+
+    def prune(self, all=True, filter=[]):
+        """Removes all unused images from the local store."""
+        with self._client() as podman:
+            results = podman.ImagesPrune(all, filter)
+        return results['pruned']
+
+    def load(self, id_, inputFile, quiet, deleteFile):
+        """Load an image into local storage from a tarball."""
+        with self._client() as podman:
+            results = podman.LoadImage(id_, inputFile, quiet, deleteFile)
+        return results['reply']
