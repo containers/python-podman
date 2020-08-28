@@ -1,3 +1,6 @@
+arch:
+  - amd64
+  - ppc64le
 dist: xenial
 language: python
 cache:
@@ -7,6 +10,10 @@ python:
   - '3.6'
   - '3.5'
 before_install:
+  - |
+    if [[ "${TRAVIS_CPU_ARCH}" == "ppc64le" ]]; then
+      sudo chown -Rvf $USER:$GROUP ~/.cache/pip/wheels;
+    fi
   - pip install -U pip
   - pip install -U setuptools
   - pip install -U wheel
