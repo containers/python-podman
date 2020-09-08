@@ -10,6 +10,8 @@ python:
   - '3.6'
   - '3.5'
 before_install:
+  # This is a permission fix meant only for Travis base image for PPC64LE.
+  # It is a known issue and required before installing python dependencies, except for bionic.
   - |
     if [[ "${TRAVIS_CPU_ARCH}" == "ppc64le" ]]; then
       sudo chown -Rvf $USER:$GROUP ~/.cache/pip/wheels;
