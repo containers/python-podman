@@ -5,9 +5,9 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/podman.svg)
 ![PyPI - Status](https://img.shields.io/pypi/status/podman.svg)
 
-## Status: Active Development
+## Status: Deprecated
 
-See [libpod](https://github.com/containers/libpod)
+See [podman-py](https://github.com/containers/podman-py)
 
 ## Overview
 
@@ -15,7 +15,7 @@ Python podman library.
 
 Provide a stable API to call into.
 
-**Notice:** The varlink interface to Podman is currently deprecated and in maintenance mode.  When Podman version 2.0 is released in 2020, it will include a fully supported REST API that will replace the varlink interface.  The varlink interface will be removed from Podman at a later release.  Starting with Podman v1.8.0, the REST API is available for test usage.  The documentation for the REST API resides [here](http://docs.podman.io/en/latest/_static/api.html#operation/changesContainer).
+**Notice:** The varlink interface to Podman is currently deprecated and in maintenance mode.  Podman version 2.0 was released in June 2020, including a fully supported REST API that replaces the varlink interface.  The varlink interface is being removed from Podman at the 3.0 release.  Python support for the 2.0 REST API is in the [python-py](https://github.com/containers/python-py) repository.  The documentation for the REST API resides [here](http://docs.podman.io/en/latest/_static/api.html#operation/changesContainer).
 
 ## Releases
 
