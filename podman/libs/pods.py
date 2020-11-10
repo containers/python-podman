@@ -140,7 +140,10 @@ class Pods():
                cgroupparent=None,
                labels=None,
                share=None,
-               infra=False):
+               infra=False,
+               infraCommand=None,
+               infraImage=None,
+               publish=None):
         """Create a new empty pod."""
         config = ConfigDict(
             name=ident,
@@ -148,6 +151,9 @@ class Pods():
             labels=labels,
             share=share,
             infra=infra,
+            infraCommand=infraCommand,
+            infraImage=infraImage,
+            publish=publish
         )
 
         with self._client() as podman:
